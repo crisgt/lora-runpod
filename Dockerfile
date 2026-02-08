@@ -1,23 +1,20 @@
-FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir \
+    runpod \
+    diffusers \
+    transformers \
+    accelerate \
+    safetensors \
+    sentencepiece \
+    protobuf
 
-# Copy handler
 COPY handler.py .
 
-# The network volume will be mounted at runtime at /runpod-volume
-# No need to copy models into the image
+ENV TRANSFORMERS_CACHE=/runpod-volume/models
+ENV HF_HOME=/runpod-volume/models
+ENV HF_HUB_OFFLINE=1
 
 CMD ["python", "-u", "handler.py"]
-```
-
-**requirements.txt:**
-```
-runpod
-transformers
-torch
-# Add your other dependencies
