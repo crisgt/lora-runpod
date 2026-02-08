@@ -1,39 +1,44 @@
 import runpod
-import requests
 import os
-import json
 
-COMFY_API = "http://127.0.0.1:8188/prompt"
 MODEL_VOLUME = "/runpod-volume/models"
 
 
-def load_workflow(workflow):
-    return {"prompt": workflow}
-
-
-def ensure_volume():
+def mount_network_models():
     if not os.path.exists(MODEL_VOLUME):
-        raise RuntimeError(f"Network volume not mounted: {MODEL_VOLUME}")
-    print(f"Using network models from: {MODEL_VOLUME}")
+        raise RuntimeError("Network volume not mounted at /runpod-volume/models")
+
+    extra_paths = "/comfyui/extra_model_paths.yaml"
+
+    yaml_content = f"""
+loras:
+  - {MODEL_VOLUME}/loras
+vae:
+  - {MODEL_VOLUME}/vae
+clip:
+  - {MODEL_VOLUME}/clip
+text_encoders:
+  - {MODEL_VOLUME}/text_encoders
+diffusion_models:
+  - {MODEL_VOLUME}/diffusion_models
+"""
+
+    with open(extra_paths, "w") as f:
+        f.write(yaml_content)
+
+    print("Network model paths registered.")
 
 
 def handler(job):
     try:
-        ensure_volume()
+        mount_network_models()
 
         workflow = job["input"]["workflow"]
 
-        payload = load_workflow(workflow)
-
-        response = requests.post(
-            COMFY_API,
-            json=payload,
-            timeout=300
-        )
-
         return {
             "status": "success",
-            "comfy_response": response.json()
+            "workflow_received": True,
+            "nodes": len(workflow)
         }
 
     except Exception as e:
