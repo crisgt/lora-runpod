@@ -1,0 +1,213 @@
+{
+  "input": {
+    "workflow": {
+      "6": {
+        "inputs": {
+          "text": "MICHIX",
+          "clip": [
+            "11",
+            0
+          ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+          "title": "CLIPTextEncode"
+        }
+      },
+      "8": {
+        "inputs": {
+          "samples": [
+            "13",
+            0
+          ],
+          "vae": [
+            "10",
+            0
+          ]
+        },
+        "class_type": "VAEDecode",
+        "_meta": {
+          "title": "VAEDecode"
+        }
+      },
+      "9": {
+        "inputs": {
+          "filename_prefix": "MarkuryFLUX",
+          "images": [
+            "8",
+            0
+          ]
+        },
+        "class_type": "SaveImage",
+        "_meta": {
+          "title": "SaveImage"
+        }
+      },
+      "10": {
+        "inputs": {
+          "filename": "ae.safetensors"
+        },
+        "class_type": "VAELoader",
+        "_meta": {
+          "title": "VAELoader"
+        }
+      },
+      "11": {
+        "inputs": {
+          "filename": "t5xxl_fp8_e4m3fn.safetensors"
+        },
+        "class_type": "DualCLIPLoader",
+        "_meta": {
+          "title": "DualCLIPLoader"
+        }
+      },
+      "12": {
+        "inputs": {
+          "filename": "flux1-dev.safetensors"
+        },
+        "class_type": "UNETLoader",
+        "_meta": {
+          "title": "UNETLoader"
+        }
+      },
+      "13": {
+        "inputs": {
+          "noise": [
+            "25",
+            0
+          ],
+          "guider": [
+            "22",
+            0
+          ],
+          "sampler": [
+            "16",
+            0
+          ],
+          "sigmas": [
+            "17",
+            0
+          ],
+          "latent_image": [
+            "88",
+            0
+          ]
+        },
+        "class_type": "SamplerCustomAdvanced",
+        "_meta": {
+          "title": "SamplerCustomAdvanced"
+        }
+      },
+      "16": {
+        "inputs": {
+          "text": "dpmpp_2m"
+        },
+        "class_type": "KSamplerSelect",
+        "_meta": {
+          "title": "KSamplerSelect"
+        }
+      },
+      "17": {
+        "inputs": {
+          "text": "sgm_uniform",
+          "model": [
+            "61",
+            0
+          ]
+        },
+        "class_type": "BasicScheduler",
+        "_meta": {
+          "title": "BasicScheduler"
+        }
+      },
+      "22": {
+        "inputs": {
+          "model": [
+            "61",
+            0
+          ],
+          "conditioning": [
+            "60",
+            0
+          ]
+        },
+        "class_type": "BasicGuider",
+        "_meta": {
+          "title": "BasicGuider"
+        }
+      },
+      "25": {
+        "inputs": {
+          "value": 972585150381429
+        },
+        "class_type": "RandomNoise",
+        "_meta": {
+          "title": "RandomNoise"
+        }
+      },
+      "60": {
+        "inputs": {
+          "value": 4,
+          "conditioning": [
+            "6",
+            0
+          ]
+        },
+        "class_type": "FluxGuidance",
+        "_meta": {
+          "title": "FluxGuidance"
+        }
+      },
+      "61": {
+        "inputs": {
+          "value": 1.15,
+          "model": [
+            "72",
+            0
+          ],
+          "width": [
+            "85",
+            0
+          ],
+          "height": [
+            "85",
+            1
+          ]
+        },
+        "class_type": "ModelSamplingFlux",
+        "_meta": {
+          "title": "ModelSamplingFlux"
+        }
+      },
+      "72": {
+        "inputs": {
+          "filename": "flux-lora.safetensors",
+          "model": [
+            "12",
+            0
+          ]
+        },
+        "class_type": "LoraLoaderModelOnly",
+        "_meta": {
+          "title": "LoraLoaderModelOnly"
+        }
+      },
+      "85": {
+        "inputs": {
+          "value": 1024
+        },
+        "class_type": "CR SDXL Aspect Ratio",
+        "_meta": {
+          "title": "CR SDXL Aspect Ratio"
+        }
+      },
+      "88": {
+        "inputs": {},
+        "class_type": "Reroute",
+        "_meta": {
+          "title": "Reroute"
+        }
+      }
+    }
+  }
+}
