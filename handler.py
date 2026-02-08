@@ -7,18 +7,8 @@ COMFY_PATH = os.getenv("COMFYUI_PATH")
 
 def start_comfy():
     subprocess.Popen(
-        [
-            "python",
-            f"{COMFY_PATH}/main.py",
-            "--listen",
-            "0.0.0.0",
-            "--port",
-            "8188",
-            "--force-fp16",
-            "--disable-auto-launch",
-            "--dont-print-server",
-        ],
-        cwd=COMFY_PATH,
+    ["python","main.py","--listen","0.0.0.0","--port","8188","--force-fp16"],
+    cwd=os.environ["COMFYUI_PATH"]
     )
 
 start_comfy()
