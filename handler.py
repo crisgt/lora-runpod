@@ -1,27 +1,36 @@
-import os
 import runpod
-import subprocess
-import requests
+import os
 
-COMFY_PATH = os.getenv("COMFYUI_PATH")
+# Models will be available at /runpod-volume when serverless starts
+MODEL_PATH = "/runpod-volume/runpod-slim/ComfyUI/models"
 
-def start_comfy():
-    subprocess.Popen(
-    ["python","main.py","--listen","0.0.0.0","--port","8188","--force-fp16"],
-    cwd=os.environ["COMFYUI_PATH"]
-    )
+def load_model():
+    """Load model from network volume"""
+    print(f"Loading model from {MODEL_PATH}")
+    
+    # Example for different frameworks:
+    
+    # PyTorch/Transformers:
+    # from transformers import AutoModel, AutoTokenizer
+    # model = AutoModel.from_pretrained(MODEL_PATH, local_files_only=True)
+    # tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, local_files_only=True)
+    
+    # Diffusers:
+    # from diffusers import StableDiffusionPipeline
+    # pipe = StableDiffusionPipeline.from_pretrained(MODEL_PATH, local_files_only=True)
+    
+    return model
 
-start_comfy()
+# Load model once when worker starts (outside handler)
+model = load_model()
 
-def handler(job):
-    workflow = job["input"]["workflow"]
-
-    r = requests.post(
-        "http://127.0.0.1:8188/prompt",
-        json={"prompt": workflow},
-        timeout=600,
-    )
-
-    return r.json()
+def handler(event):
+    """Handle inference requests"""
+    input_data = event["input"]
+    
+    # Your inference code here
+    result = model(input_data)
+    
+    return {"output": result}
 
 runpod.serverless.start({"handler": handler})
