@@ -1,11 +1,23 @@
-FROM runpod/base:0.4.0-cuda12.1.0
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04
 
-RUN pip install runpod requests
+WORKDIR /app
 
-ENV COMFYUI_PATH=/runpod-volume/runpod-slim/ComfyUI
-ENV HF_HOME=/runpod-volume/.hf
-ENV PYTHONUNBUFFERED=1
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY handler.py /handler.py
+# Copy handler
+COPY handler.py .
 
-CMD ["python", "/handler.py"]
+# The network volume will be mounted at runtime at /runpod-volume
+# No need to copy models into the image
+
+CMD ["python", "-u", "handler.py"]
+```
+
+**requirements.txt:**
+```
+runpod
+transformers
+torch
+# Add your other dependencies
