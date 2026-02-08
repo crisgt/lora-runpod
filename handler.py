@@ -1,18 +1,12 @@
 import runpod
 import os
-import json
+import random
 
 MODEL_VOLUME = "/runpod-volume/models"
 EXTRA_PATH_FILE = "/comfyui/extra_model_paths.yaml"
 
 
-# ----------------------------
-# Register Network Volume
-# ----------------------------
-def register_model_paths():
-    if not os.path.exists(MODEL_VOLUME):
-        raise RuntimeError("Network volume missing at /runpod-volume/models")
-
+def register_paths():
     yaml_content = f"""
 loras:
   - {MODEL_VOLUME}/loras
@@ -25,67 +19,108 @@ text_encoders:
 diffusion_models:
   - {MODEL_VOLUME}/diffusion_models
 """
-
     with open(EXTRA_PATH_FILE, "w") as f:
         f.write(yaml_content)
 
-    print("Model paths registered.")
 
+def build_flux_workflow(prompt, lora=None, width=1024, height=1024):
 
-# ----------------------------
-# Inject LoRA Automatically
-# ----------------------------
-def inject_flux_lora(workflow, lora_name="flux-lora.safetensors", strength=1.2):
-
-    has_lora = any(
-        node.get("class_type") == "LoraLoader"
-        for node in workflow.values()
-    )
-
-    if has_lora:
-        return workflow
-
-    # find model node
-    model_node_id = None
-    for node_id, node in workflow.items():
-        if node.get("class_type") in ["UNETLoader", "CheckpointLoaderSimple"]:
-            model_node_id = node_id
-            break
-
-    if model_node_id is None:
-        return workflow
-
-    lora_node_id = str(max(map(int, workflow.keys())) + 1)
-
-    workflow[lora_node_id] = {
-        "class_type": "LoraLoader",
-        "inputs": {
-            "model": [model_node_id, 0],
-            "clip": [model_node_id, 1] if "1" else None,
-            "lora_name": lora_name,
-            "strength_model": strength,
-            "strength_clip": strength
+    workflow = {
+        "11": {
+            "class_type": "DualCLIPLoader",
+            "inputs": {
+                "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+                "clip_name2": "clip_l.safetensors",
+                "type": "flux"
+            }
+        },
+        "12": {
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {
+                "ckpt_name": "flux1-dev.safetensors"
+            }
+        },
+        "13": {
+            "class_type": "EmptySD3LatentImage",
+            "inputs": {
+                "width": width,
+                "height": height,
+                "batch_size": 1
+            }
+        },
+        "6": {
+            "class_type": "CLIPTextEncode",
+            "inputs": {
+                "text": prompt,
+                "clip": ["11", 0]
+            }
+        },
+        "15": {
+            "class_type": "FluxGuidance",
+            "inputs": {
+                "guidance": 4,
+                "conditioning": ["6", 0]
+            }
+        },
+        "20": {
+            "class_type": "KSampler",
+            "inputs": {
+                "seed": random.randint(1,999999999),
+                "steps": 20,
+                "cfg": 1,
+                "sampler_name": "euler",
+                "scheduler": "simple",
+                "denoise": 1,
+                "model": ["12", 0],
+                "positive": ["15", 0],
+                "negative": ["6", 0],
+                "latent_image": ["13", 0]
+            }
+        },
+        "8": {
+            "class_type": "VAEDecode",
+            "inputs": {
+                "samples": ["20", 0],
+                "vae": ["12", 2]
+            }
+        },
+        "9": {
+            "class_type": "SaveImage",
+            "inputs": {
+                "filename_prefix": "flux",
+                "images": ["8", 0]
+            }
         }
     }
 
-    print("LoRA auto injected.")
+    if lora:
+        workflow["30"] = {
+            "class_type": "LoraLoader",
+            "inputs": {
+                "model": ["12", 0],
+                "clip": ["11", 0],
+                "lora_name": lora,
+                "strength_model": 1.2,
+                "strength_clip": 1.2
+            }
+        }
+        workflow["20"]["inputs"]["model"] = ["30", 0]
+
     return workflow
 
 
-# ----------------------------
-# Main Handler
-# ----------------------------
 def handler(job):
 
-    register_model_paths()
+    register_paths()
 
-    workflow = job["input"]["workflow"]
+    prompt = job["input"].get("prompt", "masterpiece")
+    lora = job["input"].get("lora", None)
 
-    workflow = inject_flux_lora(workflow)
+    workflow = build_flux_workflow(prompt, lora)
 
     return {
-        "status": "queued",
-        "nodes": len(workflow)
+        "workflow": workflow,
+        "status": "queued"
     }
 
 
