@@ -15,3 +15,4 @@ RUN comfy model download --url https://huggingface.co/CRIS2223/michi/blob/main/f
 
 # copy all input data (like images or videos) into comfyui (uncomment and adjust if needed)
 # COPY input/ /comfyui/input/
+#run now
